@@ -1,14 +1,31 @@
 [
   {
     "name": "week",
-    "title": "This week",
-    "subtitle": "AML Compliance for Claude Code: what needs attention, rendered by npm run view",
+    "title": "AML this week",
+    "subtitle": "What needs the compliance officer, worst first. Read-only. Changes are made by asking Claude Code.",
     "sections": [
-      {
-        "title": "Needs attention",
-        "note": "TODO(author): point this at the industry's attention view (overdue, stuck, quiet).",
-        "sql": "select 'replace me' as item, 'TODO(author)' as why"
-      }
+      { "title": "Needs attention", "sql": "select item, entity, ref, detail, due_on as due from attention_queue order by rank, due_on nulls last, ref" },
+      { "title": "Reports not yet lodged", "sql": "select form, ref, entity, customer, due_on as due, rule from report_deadlines where lodged_on is null order by due_on", "note": "SAR and PTR go to the NZ Police FIU through goAML. SMR and TTR go to AUSTRAC Online. This page lodges nothing." },
+      { "title": "Ongoing reviews due in 60 days", "sql": "select code, name, entity, risk_rating as risk, next_review_on as due, days_left from review_schedule where next_review_on <= current_date + 60 order by next_review_on" }
+    ]
+  },
+  {
+    "name": "customers",
+    "title": "Customer risk register",
+    "subtitle": "Every live customer, their risk, CDD level and what is still missing.",
+    "sections": [
+      { "title": "Live customers", "sql": "select code, name, entity, kind, risk_rating as risk, cdd_level as cdd, pep, id_verified_on as verified, owners, owners_unverified, sanctions_checked_on as sanctions, next_review_on as next_review from customer_register where status in ('onboarding','active') order by entity, case risk_rating when 'high' then 0 when 'medium' then 1 when 'low' then 2 else 3 end, code" },
+      { "title": "Gaps on customer files", "sql": "select rule, severity, entity, ref, finding from compliance_findings where ref like 'C-%' or ref like 'IMP-%' order by severity, rule, ref" }
+    ]
+  },
+  {
+    "name": "programme",
+    "title": "The AML programme",
+    "subtitle": "Risk assessment, programme review, audit or independent evaluation, officer reports and annual reports, per firm.",
+    "sections": [
+      { "title": "Programme calendar", "sql": "select entity, obligation, last_done, next_due, next_due - current_date as days_left, rule from programme_calendar order by next_due" },
+      { "title": "Staff with AML duties", "sql": "select entity, name, role, vetted_on, last_trained, training_due from staff_register where active and aml_role order by entity, name" },
+      { "title": "Rules in force", "sql": "select code, topic, value, unit, coalesce(applies_to, 'all') as applies_to, case when policy_default then 'your setting' else 'law' end as basis, source from rules order by jurisdiction, topic", "note": "Rows marked 'your setting' are this system's defaults for what the law leaves to your programme. Change them with /customise." }
     ]
   }
 ]

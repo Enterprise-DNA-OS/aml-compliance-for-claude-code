@@ -1,11 +1,33 @@
 [
   {
-    "name": "example",
-    "title": "TODO(author): the first document this industry must produce",
-    "for_each": "select gen_random_uuid() as id, 'Example' as name",
-    "file": "name",
+    "name": "cdd-file",
+    "title": "Customer due diligence file",
+    "for_each": "select id, code || ' ' || name as label from customers order by code",
+    "file": "label",
     "sections": [
-      { "title": "Details", "sql": "select 'replace me' as item, $1::text as record_id" }
+      { "title": "The customer", "sql": "select x.code, x.name, x.kind, x.country, x.entity, x.status, x.started_on as started, x.ended_on as ended from customer_register x join customers c on c.id = x.id where x.id = $1" },
+      { "title": "Risk and CDD", "sql": "select x.risk_rating as risk, x.cdd_level as cdd, x.pep, x.id_verified_on as verified, c.id_method as method, c.approved_by, x.approved_on, x.next_review_on as next_review from customer_register x join customers c on c.id = x.id where x.id = $1" },
+      { "title": "Source of wealth and funds", "sql": "select coalesce(source_of_wealth, 'not recorded') as wealth, coalesce(source_of_funds, 'not recorded') as funds, sow_verified_on as verified from customers where id = $1" },
+      { "title": "Owners, controllers and trustees", "sql": "select name, role, ownership_pct as pct, pep, id_verified_on as verified from beneficial_owners where customer_id = $1 order by role, name" },
+      { "title": "Checks on file", "sql": "select k.kind, coalesce(b.name, 'customer') as who, k.result, k.provider, k.checked_on as checked, k.reference, k.resolution from checks k left join beneficial_owners b on b.id = k.owner_id where k.customer_id = $1 order by k.checked_on" },
+      { "title": "Matters", "sql": "select ref, service, owner, opened_on as opened, closed_on as closed from matters where customer_id = $1 order by opened_on" },
+      { "title": "Ongoing reviews", "sql": "select reviewed_on as reviewed, risk_rating as risk, outcome, by_whom as by from reviews where customer_id = $1 order by reviewed_on" },
+      { "title": "Open rule findings", "sql": "select f.rule, f.severity, f.finding, f.source from compliance_findings f join customers c on c.code = f.ref where c.id = $1 order by f.rule" },
+      { "title": "Record history", "sql": "select created_at as at, action, actor from activity where entity_id = $1::text order by created_at, id", "note": "The file an auditor, DIA or AUSTRAC asks to see. Concerns and reports are kept out of it on purpose: they live in the compliance officer's file." }
+    ]
+  },
+  {
+    "name": "programme-pack",
+    "title": "AML programme pack",
+    "for_each": "select id, code || ' ' || name as label from entities order by code",
+    "file": "label",
+    "sections": [
+      { "title": "The firm", "sql": "select code, name, jurisdiction, sector, supervisor, enrolment_ref, compliance_officer, co_appointed_on as appointed, co_notified_on as notified from entities where id = $1" },
+      { "title": "Programme calendar", "sql": "select p.obligation, p.last_done, p.next_due, p.rule from programme_calendar p join entities e on e.code = p.entity where e.id = $1 order by p.next_due" },
+      { "title": "Programme history", "sql": "select kind, done_on as done, period, reference, findings, by_whom as by from programme_events where entity_id = $1 order by done_on" },
+      { "title": "Customers by risk", "sql": "select coalesce(x.risk_rating, 'unrated') as risk, count(*)::int as customers from customer_register x join entities e on e.code = x.entity where e.id = $1 and x.status in ('onboarding','active') group by 1 order by 1" },
+      { "title": "Staff with AML duties", "sql": "select s.name, s.role, s.vetted_on, s.last_trained, s.training_due from staff_register s join entities e on e.code = s.entity where e.id = $1 and s.active and s.aml_role order by s.name" },
+      { "title": "Open findings", "sql": "select f.rule, f.severity, f.ref, f.finding from compliance_findings f join entities e on e.code = f.entity where e.id = $1 order by f.severity, f.rule", "note": "For the auditor or independent evaluator. Report counts appear in the officer report, never customer names behind a report." }
     ]
   }
 ]

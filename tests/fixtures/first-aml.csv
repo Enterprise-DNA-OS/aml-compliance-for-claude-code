@@ -1,0 +1,5 @@
+Case ID,Entity name,Entity type,Office,Assigned to,Status,Risk rating,Received,Completed,PEP,Sanctions,Country,Email
+FA-20391,Pohutukawa Investments Limited,Private Company,HSL,James Liu,Completed,Medium,2026-03-02,2026-03-09,No,Clear,NZ,office@pohutukawa.example
+FA-20402,"Kereru Family Trust",Trust,HSL,Aroha Ngata,Completed,High,14/03/2026,21/03/2026,No,Clear,NZ,
+FA-20417,Marco Rossi,Individual,HSL,Priya Shah,In Progress,,2026-09-30,,Foreign,Possible match,IT,marco@rossi.example
+FA-20433,Harbour View Body Corporate,Incorporated Society,Kauri Accounting,Mere Tane,Abandoned,,2026-05-11,,No,,NZ,
